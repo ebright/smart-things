@@ -64,6 +64,11 @@ preferences {
     section("Notifications") {
         input "sendPushMessage", "enum", title: "Send a push notification?", metadata:[values:["Yes", "No"]], required: false
     }
+    
+    section("Custom Alert Message (optional)"){
+        paragraph "Add a custom notification message.  Note: 'for x minutes' will be added to the end the notification"
+        input "alertMsg", "text", title: "Message", defaultValue: "", required: false
+    }
 }
 
 //
@@ -186,6 +191,11 @@ def checkDoors() {
 
         log.debug("checkDoors: Door $doorName: $doorOpen, previous state: " + state.opened[doorName])
 
+        //if no custom message, set default alert message
+        if (alertMsg == ""){
+            alertMsg = "It's sunset and $doorName is open"
+        }
+        
         if (doorOpen == "open" && !state.opened[doorName]) {
             // previously closed, now open
             state.threshold = state.threshold + 5
@@ -194,7 +204,7 @@ def checkDoors() {
             if (state.threshold >= threshold) {
                 log.debug("checkDoors: Door has been open past threshold, sending an alert")
 
-                send("Alert: It's sunset and $doorName is open for $threshold minutes")
+                send("Alert: " + alertMsg.trim() + " for $threshold minutes")
                 state.opened[doorName] = true
             }
         } else if (doorOpen == "closed" && state.opened[doorName]) {
